@@ -1,17 +1,7 @@
 import { plainToClass } from '@nestjs/class-transformer';
-import { IsString, IsEnum, validateSync } from '@nestjs/class-validator';
-
-enum Environment {
-  Production = 'production',
-  Staging = 'staging',
-  Test = 'test',
-  Local = 'local',
-}
+import { IsString, validateSync } from '@nestjs/class-validator';
 
 class EnvironmentVariables {
-  @IsEnum(Environment)
-  NODE_ENV: Environment;
-
   @IsString()
   DB_CONNECTION_URL: string;
 

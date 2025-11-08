@@ -2,7 +2,6 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
-import './instrument';
 import { HttpExceptionFilter } from './infrastructure';
 
 async function bootstrap() {
