@@ -26,6 +26,6 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new HttpExceptionFilter());
-  await app.listen(4034);
+  await app.listen(3010);
 }
 bootstrap();

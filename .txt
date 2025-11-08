@@ -1,0 +1,11 @@
+
+
+
+
+
+npm run typeorm:generate-migration --name=user-country
+npm run typeorm:run-migrations
+
+
+
+
