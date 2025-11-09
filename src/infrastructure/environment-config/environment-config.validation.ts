@@ -3,16 +3,7 @@ import { IsString, validateSync } from '@nestjs/class-validator';
 
 class EnvironmentVariables {
   @IsString()
-  NODE_ENV: string;
-
-  @IsString()
   DB_CONNECTION_URL: string;
-
-  @IsString()
-  JWT_SECRET: string;
-
-  @IsString()
-  JWT_EXPIRY: string;
 }
 
 export function validate(config: Record<string, unknown>) {
