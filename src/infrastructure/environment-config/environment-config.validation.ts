@@ -3,6 +3,9 @@ import { IsString, validateSync } from '@nestjs/class-validator';
 
 class EnvironmentVariables {
   @IsString()
+  NODE_ENV: string;
+
+  @IsString()
   DB_CONNECTION_URL: string;
 
   @IsString()

@@ -3,31 +3,15 @@ import { ConfigModule } from '@nestjs/config';
 import { EnvironmentConfigService } from './environment-config.service';
 import { validate } from './environment-config.validation';
 import * as dotenv from 'dotenv';
-dotenv.config();
 
-const environment = process.env.NODE_ENV || 'local';
-console.log('Environment: ', environment);
+dotenv.config({ path: '.env' });
+console.log('Loaded environment variables from .env');
 
-const getEnvFilePath = () => {
-  switch (environment) {
-    case 'production':
-      return './env/.prod.env';
-    case 'staging':
-      return './env/.staging.env';
-    case 'local':
-      return './env/.local.env';
-    default:
-      return './env/.local.env';
-  }
-};
-
-const envFilePath = getEnvFilePath();
-console.log('Using env file:', envFilePath);
 @Global()
 @Module({
   imports: [
     ConfigModule.forRoot({
-      envFilePath,
+      envFilePath: '.env',
       isGlobal: true,
       validate,
     }),

@@ -1,12 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { TypeOrmConfigModule } from './infrastructure';
+import { EnvironmentConfigModule, TypeOrmConfigModule } from './infrastructure';
 import { AuthModule } from './auth/auth.module';
 import { ChatModule } from './chat/chat.module';
 
 @Module({
-  imports: [TypeOrmConfigModule, AuthModule, ChatModule],
+  imports: [
+    TypeOrmConfigModule,
+    AuthModule,
+    ChatModule,
+    EnvironmentConfigModule,
+  ],
   controllers: [AppController],
   providers: [AppService],
 })
