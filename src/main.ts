@@ -6,7 +6,7 @@ import { HttpExceptionFilter, ResponseInterceptor } from './infrastructure';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-  const port = process.env.PORT || 3010;
+  const port = process.env.PORT || 4034;
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));

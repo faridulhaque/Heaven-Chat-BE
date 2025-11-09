@@ -67,6 +67,23 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     }
   }
 
+  @SubscribeMessage('join')
+  handleJoin(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
+    client.join(userId);
+  }
+
+  @SubscribeMessage('signal')
+  handleSignal(@MessageBody() data: any) {
+    this.server
+      .to(data.to)
+      .emit('signal', { from: data.from, data: data.data });
+  }
+
+  @SubscribeMessage('end_call')
+  handleEndCall(@MessageBody() data: any) {
+    this.server.to(data.to).emit('end_call', { from: data.from });
+  }
+
   validateJWT(token: string): any {
     try {
       const jwtOptions = {
