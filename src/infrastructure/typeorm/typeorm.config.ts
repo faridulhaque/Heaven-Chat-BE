@@ -3,16 +3,6 @@ import { DataSource } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { config } from 'dotenv';
 
-const envFilePath = (() => {
-  switch (process.env.NODE_ENV) {
-    case 'production':
-      return './env/.prod.env';
-    case 'staging':
-      return './env/.staging.env';
-    default:
-      return './env/.local.env';
-  }
-})();
 const migrations_path = (() => {
   switch (process.env.NODE_ENV) {
     case 'production':
@@ -24,10 +14,7 @@ const migrations_path = (() => {
   }
 })();
 
-console.log(process.env.NODE_ENV);
-console.log('envFilePath: ', envFilePath);
-
-config({ path: envFilePath });
+config({ path: '.env' });
 const configService = new ConfigService();
 export default new DataSource({
   type: 'postgres',

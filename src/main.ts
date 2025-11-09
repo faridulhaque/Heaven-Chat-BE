@@ -1,11 +1,12 @@
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { AppModule } from './app.module';
 import * as bodyParser from 'body-parser';
-import { HttpExceptionFilter } from './infrastructure';
+import { HttpExceptionFilter, ResponseInterceptor } from './infrastructure';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const port = process.env.PORT || 3010;
 
   app.use(bodyParser.json({ limit: '50mb' }));
   app.use(bodyParser.urlencoded({ limit: '50mb', extended: true }));
@@ -26,6 +27,8 @@ async function bootstrap() {
   );
 
   app.useGlobalFilters(new HttpExceptionFilter());
-  await app.listen(3010);
+  app.useGlobalInterceptors(new ResponseInterceptor(new Reflector()));
+
+  await app.listen(port);
 }
 bootstrap();
