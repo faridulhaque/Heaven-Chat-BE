@@ -3,7 +3,7 @@
 
 
 
-npm run typeorm:generate-migration --name=user-country
+npm run typeorm:generate-migration --name=email
 npm run typeorm:run-migrations
 
 
