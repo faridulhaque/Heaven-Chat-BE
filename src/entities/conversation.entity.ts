@@ -1,4 +1,11 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
+import { MessageEntity } from './message.entity';
 
 @Entity('conversation')
 export class ConversationEntity {
@@ -8,6 +15,13 @@ export class ConversationEntity {
   @Column('jsonb', { nullable: false })
   members: string[];
 
-  @Column('jsonb', { nullable: false })
-  message: Record<string, any>;
+  @OneToMany(() => MessageEntity, (message) => message.conversation)
+  messages: MessageEntity[];
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  createdAt: Date;
 }
