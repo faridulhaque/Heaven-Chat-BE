@@ -1,6 +1,5 @@
 import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { AuthDto } from 'src/dto/auth.dto';
 import { UserEntity } from 'src/entities/user.entity';
 import {
   EnvironmentConfigService,
@@ -9,6 +8,8 @@ import {
 import { TLoggers } from 'src/services/enums';
 import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
+import { RegisterDto } from 'src/dto/RegisterDto';
+import { LoginDto } from 'src/dto/LoginDto';
 
 @Injectable()
 export class AuthService {
@@ -21,38 +22,42 @@ export class AuthService {
     private readonly envConfig: EnvironmentConfigService,
   ) {}
 
-  async onBoardUser(dto: AuthDto): Promise<{ token: string }> {
+  async registerUser(dto: RegisterDto): Promise<{ token: string }> {
     this.logger.verbose('Started onboarding user');
-    const existingUser = await this.userRepository.findOne({
-      where: {
-        email: dto.email,
-      },
+    const savedUser = await this.userRepository.save({
+      name: dto.name,
+      avatar: dto.avatar,
+      email: dto.email,
     });
-    if (existingUser) {
-      this.logger.log('Existing user found');
-      const token = this.generateJWT(existingUser?.userId);
-      return {
-        token,
-      };
-    } else {
-      this.logger.debug('Existing user not found, creating a new user');
-      const savedUser = await this.userRepository.save({
-        name: dto.name,
-        avatar: dto.avatar,
-        email: dto.email,
-      });
 
-      if (!savedUser)
-        throw new HttpException(
-          'Failed to create new user',
-          HttpStatus.NOT_FOUND,
-        );
-      this.logger.log('New user created');
-      const token = this.generateJWT(savedUser.userId);
-      return {
-        token,
-      };
+    if (!savedUser)
+      throw new HttpException(
+        'Failed to create new user',
+        HttpStatus.NOT_FOUND,
+      );
+    this.logger.log('New user created');
+    const token = this.generateJWT(savedUser.userId);
+    return {
+      token,
+    };
+  }
+
+  async loginUser(dto: LoginDto): Promise<{ token: string }> {
+    this.logger.verbose('Started onboarding user');
+
+    const existingUser = await this.userRepository.findOne({
+      where: { email: dto.email },
+    });
+
+    if (!existingUser) {
+      this.logger.warn(`User not found for email ${dto.email}`);
+      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
     }
+
+    this.logger.log(`User authenticated: ${existingUser.userId}`);
+
+    const token = this.generateJWT(existingUser.userId);
+    return { token };
   }
 
   private generateJWT(id: string): string {
