@@ -42,7 +42,7 @@ export class AuthService {
     };
   }
 
-  async loginUser(dto: LoginDto): Promise<{ token: string }> {
+  async loginUser(dto: LoginDto): Promise<{ token: string | null }> {
     this.logger.verbose('Started onboarding user');
 
     const existingUser = await this.userRepository.findOne({
@@ -51,7 +51,7 @@ export class AuthService {
 
     if (!existingUser) {
       this.logger.warn(`User not found for email ${dto.email}`);
-      throw new HttpException('Invalid credentials', HttpStatus.UNAUTHORIZED);
+      return { token: null };
     }
 
     this.logger.log(`User authenticated: ${existingUser.userId}`);
