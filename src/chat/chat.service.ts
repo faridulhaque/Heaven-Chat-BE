@@ -18,13 +18,24 @@ export class ChatService {
     private readonly messageRepository: Repository<MessageEntity>,
   ) {}
 
-  async createConversation(members: string[]): Promise<ConversationEntity> {
+  async startConversation(members: string[]): Promise<ConversationEntity> {
     try {
-      this.logger.verbose('Creating a conversation');
-      const conversation = this.conversationRepository.create({
-        members,
+      this.logger.verbose('Starting a conversation');
+
+      const conversation = await this.conversationRepository.findOne({
+        where: {
+          member_one: members[0],
+          member_two: members[1],
+        },
       });
-      const saved = await this.conversationRepository.save(conversation);
+
+      if (conversation) return conversation;
+
+      const newConversation = this.conversationRepository.create({
+        member_one: members[0],
+        member_two: members[1],
+      });
+      const saved = await this.conversationRepository.save(newConversation);
       this.logger.log('Conversation saved');
       return saved;
     } catch (error) {
