@@ -5,7 +5,7 @@ import { MessageEntity } from 'src/entities/message.entity';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { TLoggers } from 'src/services/enums';
 import { TMessageData } from 'src/services/types';
-import { Repository } from 'typeorm';
+import { Raw, Repository } from 'typeorm';
 
 @Injectable()
 export class ChatService {
@@ -24,17 +24,16 @@ export class ChatService {
 
       const conversation = await this.conversationRepository.findOne({
         where: {
-          member_one: members[0],
-          member_two: members[1],
+          members: Raw((alias) => `${alias} @> '${JSON.stringify(members)}'`),
         },
       });
 
       if (conversation) return conversation;
 
       const newConversation = this.conversationRepository.create({
-        member_one: members[0],
-        member_two: members[1],
+        members,
       });
+
       const saved = await this.conversationRepository.save(newConversation);
       this.logger.log('Conversation saved');
       return saved;

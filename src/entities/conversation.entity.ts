@@ -12,11 +12,8 @@ export class ConversationEntity {
   @PrimaryGeneratedColumn('uuid')
   conversationId: string;
 
-  @Column('uuid')
-  member_one: string;
-
-  @Column('uuid')
-  member_two: string;
+  @Column('jsonb', { nullable: false })
+  members: string[];
 
   @OneToMany(() => MessageEntity, (message) => message.conversation)
   messages: MessageEntity[];
