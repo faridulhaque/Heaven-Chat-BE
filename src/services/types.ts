@@ -1,3 +1,5 @@
+import { UserEntity } from 'src/entities/user.entity';
+
 export type TMessageDataFE = {
   message: string;
   type: string;
@@ -11,3 +13,7 @@ export type TMessageData = {
   message: any;
   type: string;
 };
+
+export interface RequestWithUser extends Request {
+  user: UserEntity;
+}

@@ -10,6 +10,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { RegisterDto } from 'src/dto/RegisterDto';
 import { LoginDto } from 'src/dto/LoginDto';
+import { ChatGateway } from 'src/chat/chat.gateway';
 
 @Injectable()
 export class AuthService {
@@ -19,6 +20,7 @@ export class AuthService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
     private readonly jwtService: JwtService,
+    private readonly chatGatewayService: ChatGateway,
     private readonly envConfig: EnvironmentConfigService,
   ) {}
 
@@ -36,6 +38,9 @@ export class AuthService {
         HttpStatus.NOT_FOUND,
       );
     this.logger.log('New user created');
+    this.chatGatewayService.broadcastNewUser({
+      user: savedUser,
+    });
     const token = this.generateJWT(savedUser.userId);
     return {
       token,
@@ -53,6 +58,10 @@ export class AuthService {
       this.logger.warn(`User not found for email ${dto.email}`);
       return { token: null };
     }
+
+    this.chatGatewayService.broadcastNewUser({
+      user: existingUser,
+    });
 
     this.logger.log(`User authenticated: ${existingUser.userId}`);
 

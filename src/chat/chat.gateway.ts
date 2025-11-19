@@ -40,7 +40,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   handleDisconnect(client: Socket) {
-    console.log(`Client disconnected: ${client.id}`);
+    this.logger.warn('client disconnected', client.id);
+  }
+
+  broadcastNewUser(payload: any) {
+    this.server.emit('new-user', payload);
   }
 
   @SubscribeMessage('message')
