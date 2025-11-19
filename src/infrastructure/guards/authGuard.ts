@@ -32,7 +32,6 @@ export class AuthGuard implements CanActivate {
       }
 
       const token = request.headers['authorization'];
-      console.log('token', token);
       const { id } = await this.validateJWT(token);
 
       const user = await this.userRepository.findOne({
