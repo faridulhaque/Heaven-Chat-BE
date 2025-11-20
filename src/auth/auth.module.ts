@@ -6,14 +6,15 @@ import { AuthService } from './auth.service';
 import { TLoggers } from 'src/services/enums';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { JwtService } from '@nestjs/jwt';
-import { ChatGateway } from 'src/chat/chat.gateway';
-import { ChatService } from 'src/chat/chat.service';
+
 import { ConversationEntity } from 'src/entities/conversation.entity';
 import { MessageEntity } from 'src/entities/message.entity';
+import { ChatModule } from 'src/chat/chat.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([UserEntity, ConversationEntity, MessageEntity]),
+    ChatModule,
   ],
   controllers: [AuthController],
   providers: [
@@ -23,13 +24,8 @@ import { MessageEntity } from 'src/entities/message.entity';
       provide: TLoggers.auth,
       useValue: new ServiceLevelLogger(TLoggers.auth),
     },
-    {
-      provide: TLoggers.chat,
-      useValue: new ServiceLevelLogger(TLoggers.chat),
-    },
-    ChatGateway,
+
     JwtService,
-    ChatService,
   ],
 })
 export class AuthModule {}

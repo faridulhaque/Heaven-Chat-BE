@@ -30,7 +30,7 @@ export class ChatController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('/conversation/:id')
+  @Get('/conversation/:conversationId')
   @SetMetadata('statusCode', 201)
   async getConversation(
     @Req() request: RequestWithUser,

@@ -4,6 +4,7 @@ export type TMessageDataFE = {
   message: string;
   type: string;
   to: string;
+  from: string;
   conversationId: string;
 };
 

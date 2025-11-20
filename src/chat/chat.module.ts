@@ -25,5 +25,13 @@ import { UserEntity } from 'src/entities/user.entity';
       useValue: new ServiceLevelLogger(TLoggers.chat),
     },
   ],
+  exports: [
+    {
+      provide: TLoggers.chat,
+      useValue: new ServiceLevelLogger(TLoggers.chat),
+    },
+    ChatService,
+    ChatGateway,
+  ],
 })
 export class ChatModule {}

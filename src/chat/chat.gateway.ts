@@ -15,11 +15,22 @@ import {
   ServiceLevelLogger,
 } from 'src/infrastructure';
 import { TLoggers } from 'src/services/enums';
-import { TMessageDataFE } from 'src/services/types';
 import { ChatService } from './chat.service';
 
-@WebSocketGateway({ namespace: 'chat' })
+@WebSocketGateway({
+  namespace: 'chat',
+  cors: {
+    origin: '*',
+    methods: ['GET', 'POST'],
+    credentials: true,
+  },
+  path: '/socket.io',
+  pingInterval: 25000,
+  pingTimeout: 60000,
+})
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
+  private userSockets = new Map<string, string>();
+
   constructor(
     @Inject(TLoggers.chat)
     private logger: ServiceLevelLogger,
@@ -31,44 +42,50 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  async handleConnection(client: Socket) {
-    const token = client.handshake.auth.token;
-    const { id } = await this.validateJWT(token);
-    if (id) {
-      this.logger.debug('Client Connected, id:', id);
-    }
+  // async handleConnection(client: Socket) {
+  //   const token = client.handshake.auth.token;
+  //   const { id: userId } = await this.validateJWT(token);
+
+  //   if (userId) {
+  //     client.data.userId = userId;
+  //     this.userSockets.set(userId, client.id);
+  //     this.logger.debug(`User ${userId} connected with socket ${client.id}`);
+  //   }
+  // }
+
+  // handleDisconnect(client: Socket) {
+  //   const userId = client.data.userId;
+  //   this.logger.warn(`User ${userId} disconnected, socket: ${client.id}`);
+  //   this.userSockets.delete(userId);
+  // }
+
+  handleConnection(client: Socket) {
+    this.logger.debug(`Client connected: ${client.id}`);
   }
 
   handleDisconnect(client: Socket) {
-    this.logger.warn('client disconnected', client.id);
+    this.logger.warn(`Client disconnected: ${client.id}`);
   }
 
   broadcastNewUser(payload: any) {
     this.server.emit('new-user', payload);
   }
 
-  @SubscribeMessage('message')
-  async handleMessage(
-    @MessageBody() data: any,
-    @ConnectedSocket() client: Socket,
-  ) {
-    const { to, message, type, conversationId } = data as TMessageDataFE;
-    const recipient = this.server.sockets.sockets.get(to);
+  @SubscribeMessage('private-message')
+  handleMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
+    console.log('message sent', data.message.message);
 
-    if (recipient) {
-      const savedMessage = await this.chatService.saveMessage(conversationId, {
-        senderId: client.id,
-        recipientId: to,
-        message,
-        type,
-      });
+    const { to } = data;
 
-      if (savedMessage?.messageId) {
-        recipient.emit('message', savedMessage);
-      }
-    } else {
-      this.logger.warn(`Target socket ${to} not found`);
-    }
+    const recipientSocketId = this.userSockets.get(to);
+    if (!recipientSocketId) return;
+    this.server.to(recipientSocketId).emit('private-message', {
+      message: data.message.message,
+      type: data.message.type,
+      to: data.message.to,
+      from: client.data.userId,
+      conversationId: data.message.conversationId,
+    });
   }
 
   @SubscribeMessage('join')
@@ -88,13 +105,11 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.server.to(data.to).emit('end_call', { from: data.from });
   }
 
-  validateJWT(token: string): any {
+  validateJWT(token: string) {
     try {
-      const jwtOptions = {
+      return this.jwtService.verify(token, {
         secret: this.envConfig.getJwtSecret(),
-      };
-      const decode = this.jwtService.verify(token, jwtOptions);
-      return decode;
+      });
     } catch (error) {
       throw new HttpException(
         error?.message || 'Invalid Token',
