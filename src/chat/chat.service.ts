@@ -22,6 +22,7 @@ export class ChatService {
   ) {}
 
   async startConversation(members: string[]): Promise<ConversationEntity> {
+    console.log('members', members);
     try {
       this.logger.verbose('Starting a conversation');
 
@@ -107,6 +108,39 @@ export class ChatService {
       this.logger.error(error.message || 'Failed to fetch conversations');
       throw new HttpException(
         error?.message || 'Failed to fetch conversation',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async getOneConversation(
+    loggedInUserId: string,
+    conversationId: string,
+  ): Promise<ConversationEntity> {
+    try {
+      this.logger.verbose('Searching for conversation');
+      const conversation = await this.conversationRepository.findOne({
+        where: {
+          conversationId,
+        },
+      });
+      if (!conversation)
+        throw new HttpException('Conversation not found', HttpStatus.NOT_FOUND);
+      const counterPartyId = conversation?.members.find(
+        (m: string) => m !== loggedInUserId,
+      );
+      this.logger.debug('Conversation found');
+      const counterParty = await this.userRepository.findOne({
+        where: {
+          userId: counterPartyId,
+        },
+      });
+      (conversation as any).counterParty = counterParty;
+      return conversation;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Error finding conversation');
+      throw new HttpException(
+        error.message || 'Error while finding convo',
         HttpStatus.NOT_FOUND,
       );
     }
