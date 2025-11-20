@@ -8,9 +8,12 @@ import { JwtService } from '@nestjs/jwt';
 import { TLoggers } from 'src/services/enums';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { MessageEntity } from 'src/entities/message.entity';
+import { UserEntity } from 'src/entities/user.entity';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([ConversationEntity, MessageEntity])],
+  imports: [
+    TypeOrmModule.forFeature([ConversationEntity, MessageEntity, UserEntity]),
+  ],
   controllers: [ChatController],
   providers: [
     ChatService,

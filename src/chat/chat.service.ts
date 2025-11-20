@@ -2,6 +2,7 @@ import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { ConversationEntity } from 'src/entities/conversation.entity';
 import { MessageEntity } from 'src/entities/message.entity';
+import { UserEntity } from 'src/entities/user.entity';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { TLoggers } from 'src/services/enums';
 import { TMessageData } from 'src/services/types';
@@ -14,6 +15,8 @@ export class ChatService {
     private logger: ServiceLevelLogger,
     @InjectRepository(ConversationEntity)
     private readonly conversationRepository: Repository<ConversationEntity>,
+    @InjectRepository(UserEntity)
+    private readonly userRepository: Repository<UserEntity>,
     @InjectRepository(MessageEntity)
     private readonly messageRepository: Repository<MessageEntity>,
   ) {}
@@ -70,6 +73,41 @@ export class ChatService {
       throw new HttpException(
         error.message || 'Failed to save messages',
         HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async getConversations(memberId: string): Promise<any> {
+    this.logger.verbose('Finding all conversations for user', memberId);
+    try {
+      const conversations = await this.conversationRepository.find({
+        where: {
+          members: Raw((alias) => `${alias} @> '["${memberId}"]'`),
+        },
+      });
+
+      this.logger.log('Conversations found, count:', conversations?.length);
+
+      const data: any = [];
+      for (const c of conversations) {
+        const counterPartyId = c.members.find((c: string) => c !== memberId);
+        this.logger.debug('Fetching conversation counter party');
+        const counterParty = await this.userRepository.findOne({
+          where: {
+            userId: counterPartyId,
+          },
+        });
+
+        (c as any).counterParty = counterParty;
+        data.push(c);
+      }
+      this.logger.log('Returning conversation');
+      return data;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Failed to fetch conversations');
+      throw new HttpException(
+        error?.message || 'Failed to fetch conversation',
+        HttpStatus.NOT_FOUND,
       );
     }
   }
