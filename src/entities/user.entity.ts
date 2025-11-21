@@ -13,4 +13,7 @@ export class UserEntity {
 
   @Column('')
   avatar: string;
+
+  @Column('jsonb', { nullable: false })
+  blocked: string[];
 }

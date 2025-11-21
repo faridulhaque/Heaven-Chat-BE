@@ -42,25 +42,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server: Server;
 
-  // async handleConnection(client: Socket) {
-  //   const token = client.handshake.auth.token;
-  //   const { id: userId } = await this.validateJWT(token);
+  async handleConnection(client: Socket) {
+    const token = client.handshake.auth.token;
+    const { id: userId } = await this.validateJWT(token);
 
-  //   if (userId) {
-  //     client.data.userId = userId;
-  //     this.userSockets.set(userId, client.id);
-  //     this.logger.debug(`User ${userId} connected with socket ${client.id}`);
-  //   }
-  // }
+    if (userId) {
+      client.data.userId = userId;
+      this.userSockets.set(userId, client.id);
 
-  // handleDisconnect(client: Socket) {
-  //   const userId = client.data.userId;
-  //   this.logger.warn(`User ${userId} disconnected, socket: ${client.id}`);
-  //   this.userSockets.delete(userId);
-  // }
-
-  handleConnection(client: Socket) {
-    this.logger.debug(`Client connected: ${client.id}`);
+      this.logger.debug(`User ${userId} connected with socket ${client.id}`);
+    }
   }
 
   handleDisconnect(client: Socket) {
@@ -72,13 +63,27 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   }
 
   @SubscribeMessage('private-message')
-  handleMessage(@MessageBody() data: any, @ConnectedSocket() client: Socket) {
-    console.log('message sent', data.message.message);
-
+  async handleMessage(
+    @MessageBody() data: any,
+    @ConnectedSocket() client: Socket,
+  ) {
     const { to } = data;
 
+    console.log('message', client.id);
+
+    await this.chatService.saveMessage({
+      message: data.message.message,
+      type: data.message.type,
+      to: data.message.to,
+      from: client.data.userId,
+      conversationId: data.message.conversationId,
+    });
+
     const recipientSocketId = this.userSockets.get(to);
-    if (!recipientSocketId) return;
+    if (!recipientSocketId) {
+      this.logger.warn('recipient socket id not found');
+      return;
+    }
     this.server.to(recipientSocketId).emit('private-message', {
       message: data.message.message,
       type: data.message.type,

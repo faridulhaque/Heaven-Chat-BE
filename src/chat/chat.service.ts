@@ -5,7 +5,7 @@ import { MessageEntity } from 'src/entities/message.entity';
 import { UserEntity } from 'src/entities/user.entity';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { TLoggers } from 'src/services/enums';
-import { TMessageData } from 'src/services/types';
+import { TMessageDataFE } from 'src/services/types';
 import { Raw, Repository } from 'typeorm';
 
 @Injectable()
@@ -50,24 +50,26 @@ export class ChatService {
     }
   }
 
-  async saveMessage(
-    conversationId: string,
-    data: TMessageData,
-  ): Promise<MessageEntity> {
+  async saveMessage(data: TMessageDataFE): Promise<MessageEntity> {
     try {
       this.logger.verbose('Message is saving');
 
       const message = this.messageRepository.create({
         type: data.type,
-        senderId: data.senderId,
-        recipientId: data.recipientId,
+        from: data.from,
+        to: data.to,
         message: data.message,
-        conversation: { conversationId },
+        conversation: { conversationId: data.conversationId },
       });
 
       await this.messageRepository.save(message);
-
       this.logger.log('Message has been saved');
+      await this.conversationRepository.update(
+        { conversationId: data.conversationId },
+        { lastMessage: data.message },
+      );
+      this.logger.log('lasMessage has been saved');
+
       return message;
     } catch (error) {
       this.logger.error(error.message || 'Failed to save messages');
@@ -84,6 +86,9 @@ export class ChatService {
       const conversations = await this.conversationRepository.find({
         where: {
           members: Raw((alias) => `${alias} @> '["${memberId}"]'`),
+        },
+        order: {
+          updatedAt: 'DESC',
         },
       });
 
@@ -142,6 +147,135 @@ export class ChatService {
       throw new HttpException(
         error.message || 'Error while finding convo',
         HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async getMessages(conversationId: string): Promise<MessageEntity[]> {
+    try {
+      this.logger.verbose('Searching for messages');
+
+      const messages = await this.messageRepository.find({
+        where: {
+          conversation: {
+            conversationId,
+          },
+        },
+        order: {
+          createdAt: 'DESC',
+        },
+      });
+
+      return messages;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Error finding conversation');
+      throw new HttpException(
+        error.message || 'Error while finding convo',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
+
+  async switchBlockUser(
+    blockerId: string,
+    blockedId: string,
+  ): Promise<boolean> {
+    this.logger.verbose('Checking for blocked users');
+
+    try {
+      const user = await this.userRepository.findOne({
+        where: { userId: blockerId },
+        select: { userId: true, blocked: true },
+      });
+
+      if (!user) return false;
+
+      const isBlocked = user.blocked.includes(blockedId);
+      let updated: any;
+
+      if (isBlocked) {
+        this.logger.debug('user is blocked, unblocking now');
+
+        const filtered = user.blocked.filter((b) => b !== blockedId);
+
+        updated = await this.userRepository.update(
+          { userId: blockerId },
+          { blocked: filtered },
+        );
+      } else {
+        this.logger.debug('user is unblocked, blocking now');
+
+        const updatedList = [...user.blocked, blockedId];
+
+        updated = await this.userRepository.update(
+          { userId: blockerId },
+          { blocked: updatedList },
+        );
+      }
+
+      if (updated.affected > 0) {
+        this.logger.log('block position updated');
+        return true;
+      }
+    } catch (error) {
+      this.logger.error(error.message || 'Error while blocking/unblocking');
+      throw new HttpException(
+        error.message || 'Error while blocking/unblocking',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+    return false;
+  }
+
+  async checkBlocked(members: string[]): Promise<boolean> {
+    try {
+      this.logger.debug('first check if blocked');
+
+      const firstCheck = await this.userRepository.findOne({
+        where: {
+          userId: members[0],
+          blocked: Raw((alias) => `${alias} @> :blockedId`, {
+            blockedId: JSON.stringify([members[1]]),
+          }),
+        },
+      });
+
+      this.logger.debug('Second check if blocked');
+
+      const oppositeCheck = await this.userRepository.findOne({
+        where: {
+          userId: members[1],
+          blocked: Raw((alias) => `${alias} @> :blockedId`, {
+            blockedId: JSON.stringify([members[0]]),
+          }),
+        },
+      });
+
+      const isBlocked = Boolean(firstCheck || oppositeCheck);
+
+      this.logger.log(`check done result: ${isBlocked}`);
+
+      return isBlocked;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Failed to check blocks');
+      throw new HttpException(
+        'Failed to check blocks',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+  async deleteChat(conversationId: string): Promise<boolean> {
+    try {
+      this.logger.debug('deleting conversation');
+
+      const deleted = await this.conversationRepository.delete(conversationId);
+
+      return (deleted.affected ?? 0) > 0;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Failed to delete a chat');
+      throw new HttpException(
+        'Failed to delete chat',
+        HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
   }

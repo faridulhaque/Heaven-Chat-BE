@@ -13,13 +13,13 @@ export class MessageEntity {
   messageId: string;
 
   @Column('uuid')
-  senderId: string;
+  from: string;
 
   @Column('uuid')
-  recipientId: string;
+  to: string;
 
   @Column('jsonb', { nullable: false })
-  message: Record<string, any>;
+  message: string;
 
   @Column('')
   type: string;

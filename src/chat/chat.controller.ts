@@ -1,9 +1,12 @@
 import {
   Body,
   Controller,
+  Delete,
   Get,
   Param,
   Post,
+  Put,
+  Query,
   Req,
   SetMetadata,
   UseGuards,
@@ -12,6 +15,7 @@ import { ChatService } from './chat.service';
 import { StartConversationDto } from 'src/dto/StartConversationDto';
 import { AuthGuard } from 'src/infrastructure/guards/authGuard';
 import type { RequestWithUser } from 'src/services/types';
+import { CheckBlockDto } from 'src/dto/CheckBlockDto';
 
 @Controller('chat')
 export class ChatController {
@@ -21,6 +25,12 @@ export class ChatController {
   @Post('/start')
   async startConversation(@Body() body: StartConversationDto) {
     return await this.chatService.startConversation(body.members);
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/blocked')
+  async checkIfBlocked(@Query() dto: CheckBlockDto) {
+    return await this.chatService.checkBlocked(dto.members);
   }
 
   @UseGuards(AuthGuard)
@@ -40,5 +50,35 @@ export class ChatController {
       request.user.userId,
       conversationId,
     );
+  }
+
+  @UseGuards(AuthGuard)
+  @Get('/:conversationId/messages')
+  @SetMetadata('statusCode', 201)
+  async getMessages(@Param('conversationId') conversationId: string) {
+    return await this.chatService.getMessages(conversationId);
+  }
+
+  @UseGuards(AuthGuard)
+  @Put('/block/:blockedUserId')
+  @SetMetadata('statusCode', 200)
+  async switchBlockUser(
+    @Req() request: RequestWithUser,
+    @Param('blockedUserId') blockedUserId: string,
+  ) {
+    return await this.chatService.switchBlockUser(
+      request.user.userId,
+      blockedUserId,
+    );
+  }
+
+  @UseGuards(AuthGuard)
+  @Delete('/chat/:conversationId')
+  @SetMetadata('statusCode', 200)
+  async deleteChat(
+    @Req() request: RequestWithUser,
+    @Param('blockedUserId') conversationId: string,
+  ) {
+    return await this.chatService.deleteChat(conversationId);
   }
 }
