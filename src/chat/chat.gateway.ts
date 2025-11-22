@@ -30,6 +30,7 @@ import { ChatService } from './chat.service';
 })
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private userSockets = new Map<string, string>();
+  private busyUsers = new Map<string, boolean>();
 
   constructor(
     @Inject(TLoggers.chat)
@@ -100,6 +101,15 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('signal')
   handleSignal(@MessageBody() data: any) {
+    if (data.datas.type === 'offer') {
+      if (this.busyUsers.get(data.to)) {
+        this.server.to(data.from).emit('busy', {});
+        return;
+      }
+      this.busyUsers.set(data.from, true);
+      this.busyUsers.set(data.to, true);
+    }
+
     this.server
       .to(data.to)
       .emit('signal', { from: data.from, data: data.data });
@@ -108,6 +118,8 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   @SubscribeMessage('end_call')
   handleEndCall(@MessageBody() data: any) {
     this.server.to(data.to).emit('end_call', { from: data.from });
+    this.busyUsers.set(data.from, false);
+    this.busyUsers.set(data.to, false);
   }
 
   validateJWT(token: string) {
