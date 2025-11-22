@@ -19,6 +19,9 @@ export class ConversationEntity {
   @Column('jsonb', { nullable: false })
   members: string[];
 
+  @Column('jsonb', { default: [], nullable: true })
+  deletedBy: string[];
+
   @OneToMany(() => MessageEntity, (message) => message.conversation)
   messages: MessageEntity[];
 

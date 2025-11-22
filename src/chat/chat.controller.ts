@@ -73,12 +73,15 @@ export class ChatController {
   }
 
   @UseGuards(AuthGuard)
-  @Delete('/chat/:conversationId')
+  @Delete('/conversation/:conversationId')
   @SetMetadata('statusCode', 200)
   async deleteChat(
     @Req() request: RequestWithUser,
-    @Param('blockedUserId') conversationId: string,
+    @Param('conversationId') conversationId: string,
   ) {
-    return await this.chatService.deleteChat(conversationId);
+    return await this.chatService.deleteChat(
+      request.user.userId,
+      conversationId,
+    );
   }
 }

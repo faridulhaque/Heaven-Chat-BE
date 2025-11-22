@@ -6,7 +6,7 @@ import { UserEntity } from 'src/entities/user.entity';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { TLoggers } from 'src/services/enums';
 import { TMessageDataFE } from 'src/services/types';
-import { Raw, Repository } from 'typeorm';
+import { Not, Raw, Repository } from 'typeorm';
 
 @Injectable()
 export class ChatService {
@@ -86,6 +86,7 @@ export class ChatService {
       const conversations = await this.conversationRepository.find({
         where: {
           members: Raw((alias) => `${alias} @> '["${memberId}"]'`),
+          deletedBy: Not(Raw((alias) => `${alias} @> '["${memberId}"]'`)),
         },
         order: {
           updatedAt: 'DESC',
@@ -190,23 +191,21 @@ export class ChatService {
 
       if (!user) return false;
 
+      user.blocked = user.blocked || [];
+
       const isBlocked = user.blocked.includes(blockedId);
       let updated: any;
 
       if (isBlocked) {
         this.logger.debug('user is blocked, unblocking now');
-
         const filtered = user.blocked.filter((b) => b !== blockedId);
-
         updated = await this.userRepository.update(
           { userId: blockerId },
           { blocked: filtered },
         );
       } else {
         this.logger.debug('user is unblocked, blocking now');
-
         const updatedList = [...user.blocked, blockedId];
-
         updated = await this.userRepository.update(
           { userId: blockerId },
           { blocked: updatedList },
@@ -224,6 +223,7 @@ export class ChatService {
         HttpStatus.INTERNAL_SERVER_ERROR,
       );
     }
+
     return false;
   }
 
@@ -264,13 +264,29 @@ export class ChatService {
       );
     }
   }
-  async deleteChat(conversationId: string): Promise<boolean> {
+
+  async deleteChat(userId: string, conversationId: string): Promise<boolean> {
     try {
       this.logger.debug('deleting conversation');
 
-      const deleted = await this.conversationRepository.delete(conversationId);
+      const conversation = await this.conversationRepository.findOne({
+        where: {
+          conversationId,
+        },
+        select: {
+          conversationId: true,
+          deletedBy: true,
+        },
+      });
+      if (!conversation)
+        throw new HttpException('Conversation not found', HttpStatus.NOT_FOUND);
 
-      return (deleted.affected ?? 0) > 0;
+      const deleted = conversation.deletedBy || [];
+      deleted.push(userId);
+      conversation.deletedBy = deleted;
+      const saved = await this.conversationRepository.save(conversation);
+      if (saved) return true;
+      else return false;
     } catch (error: any) {
       this.logger.error(error.message || 'Failed to delete a chat');
       throw new HttpException(
