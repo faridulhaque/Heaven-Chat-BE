@@ -163,7 +163,7 @@ export class ChatService {
           },
         },
         order: {
-          createdAt: 'DESC',
+          createdAt: 'ASC',
         },
       });
 
@@ -171,7 +171,7 @@ export class ChatService {
     } catch (error: any) {
       this.logger.error(error.message || 'Error finding conversation');
       throw new HttpException(
-        error.message || 'Error while finding convo',
+        error.message || 'Error while finding conversation',
         HttpStatus.NOT_FOUND,
       );
     }

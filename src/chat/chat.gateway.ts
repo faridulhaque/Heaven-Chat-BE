@@ -31,6 +31,7 @@ import { ChatService } from './chat.service';
 export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private userSockets = new Map<string, string>();
   private busyUsers = new Map<string, boolean>();
+  private onlineUsers = new Map<string, boolean>();
 
   constructor(
     @Inject(TLoggers.chat)
@@ -50,6 +51,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (userId) {
       client.data.userId = userId;
       this.userSockets.set(userId, client.id);
+      this.onlineUsers.set(userId, true);
 
       this.logger.debug(`User ${userId} connected with socket ${client.id}`);
     }
@@ -57,8 +59,19 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   handleDisconnect(client: Socket) {
     this.logger.warn(`Client disconnected: ${client.id}`);
+    if (client.data.userId) {
+      this.onlineUsers.set(client.data.userId, false);
+    }
   }
 
+  @SubscribeMessage('is_online')
+  checkOnline(
+    @MessageBody() userId: string,
+    @ConnectedSocket() client: Socket,
+  ) {
+    const isOnline = this.onlineUsers.get(userId) === true;
+    client.emit('is_online', isOnline);
+  }
   broadcastNewUser(payload: any) {
     this.server.emit('new-user', payload);
   }
@@ -101,7 +114,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('signal')
   handleSignal(@MessageBody() data: any) {
-    if (data.datas.type === 'offer') {
+    if (data.data.type === 'offer') {
       if (this.busyUsers.get(data.to)) {
         this.server.to(data.from).emit('busy', {});
         return;
