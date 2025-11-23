@@ -60,7 +60,7 @@ export class ChatController {
   }
 
   @UseGuards(AuthGuard)
-  @Get('/:conversationId/messages')
+  @Get('/users')
   @SetMetadata('statusCode', 201)
   async getAllUsers(@Req() request: RequestWithUser) {
     return await this.chatService.getUsersAll(request.user.userId);

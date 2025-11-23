@@ -3,7 +3,7 @@
 
 
 
-npm run typeorm:generate-migration --messagentity
+npm run typeorm:generate-migration --userunique
 npm run typeorm:run-migrations
 
 

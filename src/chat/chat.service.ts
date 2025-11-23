@@ -298,14 +298,16 @@ export class ChatService {
 
   async getUsersAll(loggedInUserId: string): Promise<UserEntity[]> {
     try {
-      this.logger.verbose('Searching for users except loggedIn user');
+      this.logger.verbose(
+        `Searching for users except loggedIn user ${loggedInUserId}`,
+      );
 
       const users = await this.userRepository.find({
         where: {
           userId: Not(loggedInUserId),
         },
         order: {
-          createdAt: 'ASC',
+          createdAt: 'DESC',
         },
       });
 
