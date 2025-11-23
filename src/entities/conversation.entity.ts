@@ -26,7 +26,7 @@ export class ConversationEntity {
   messages: MessageEntity[];
 
   @UpdateDateColumn({
-    type: 'timestamp',
+    type: 'timestamptz',
     default: () => 'CURRENT_TIMESTAMP',
     onUpdate: 'CURRENT_TIMESTAMP',
   })
@@ -35,7 +35,7 @@ export class ConversationEntity {
   @CreateDateColumn({
     type: 'timestamp',
     default: () => 'CURRENT_TIMESTAMP',
-    onUpdate: 'CURRENT_TIMESTAMP',
+    onUpdate: 'timestamptz',
   })
   createdAt: Date;
 }

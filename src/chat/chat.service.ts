@@ -295,4 +295,27 @@ export class ChatService {
       );
     }
   }
+
+  async getUsersAll(loggedInUserId: string): Promise<UserEntity[]> {
+    try {
+      this.logger.verbose('Searching for users except loggedIn user');
+
+      const users = await this.userRepository.find({
+        where: {
+          userId: Not(loggedInUserId),
+        },
+        order: {
+          createdAt: 'ASC',
+        },
+      });
+
+      return users;
+    } catch (error: any) {
+      this.logger.error(error.message || 'Error finding conversation');
+      throw new HttpException(
+        error.message || 'Error while finding conversation',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+  }
 }

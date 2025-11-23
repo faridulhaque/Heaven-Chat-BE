@@ -60,6 +60,13 @@ export class ChatController {
   }
 
   @UseGuards(AuthGuard)
+  @Get('/:conversationId/messages')
+  @SetMetadata('statusCode', 201)
+  async getAllUsers(@Req() request: RequestWithUser) {
+    return await this.chatService.getUsersAll(request.user.userId);
+  }
+
+  @UseGuards(AuthGuard)
   @Put('/block/:blockedUserId')
   @SetMetadata('statusCode', 200)
   async switchBlockUser(
