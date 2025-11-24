@@ -61,6 +61,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.warn(`Client disconnected: ${client.id}`);
     if (client.data.userId) {
       this.onlineUsers.set(client.data.userId, false);
+      this.busyUsers.set(client.data.userId, false); // ← ADD THIS LINE
     }
   }
 
@@ -109,28 +110,37 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   @SubscribeMessage('join')
   handleJoin(@MessageBody() userId: string, @ConnectedSocket() client: Socket) {
+    console.log('JOIN:', userId, 'client:', client.id);
     client.join(userId);
   }
 
   @SubscribeMessage('signal')
   handleSignal(@MessageBody() data: any) {
-    if (data.data.type === 'offer') {
+    this.logger.debug(`handleSignal received: ${JSON.stringify(data)}`);
+
+    if (data.type === 'offer') {
       if (this.busyUsers.get(data.to)) {
         this.server.to(data.from).emit('busy', {});
         return;
       }
+
       this.busyUsers.set(data.from, true);
       this.busyUsers.set(data.to, true);
     }
 
-    this.server
-      .to(data.to)
-      .emit('signal', { from: data.from, data: data.data });
+    console.log('emitting to:', data.to);
+
+    this.server.to(data.to).emit('signal', {
+      from: data.from,
+      data: data.data,
+      callerName: data.callerName,
+    });
   }
 
   @SubscribeMessage('end_call')
   handleEndCall(@MessageBody() data: any) {
     this.server.to(data.to).emit('end_call', { from: data.from });
+    this.logger.log('call ended');
     this.busyUsers.set(data.from, false);
     this.busyUsers.set(data.to, false);
   }

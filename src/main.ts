@@ -15,7 +15,9 @@ async function bootstrap() {
     type: VersioningType.URI,
   });
   app.enableCors({
-    origin: '*',
+    origin: 'http://localhost:3000',
+    // origin: 'https://heaven-chat-fe.vercel.app',
+
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Accept,x-api-key,x-client-id,authorization',
     credentials: true,
