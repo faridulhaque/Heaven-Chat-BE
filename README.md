@@ -43,11 +43,12 @@
 1. Open the live frontend on two different devices  
 2. Log in using two different Gmail accounts  
 3. Send messages or make calls to test real-time functionality
+
 ## ⚙️ Installation (Local Setup)
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/faridulhaque/Heaven-Chat-BE
+   git clone https://github.com/faridulhaque/Heaven-Chat-BE.git
    cd Heaven-Chat-BE
 
 2. **Install dependencies**
@@ -55,10 +56,10 @@
     npm install
 
 
-3. **Create a .env file and add the base url your Firebase config:**
+3. **Create a .env file and add:**
 
 ```env
-PORT=4004
+PORT=
 DB_CONNECTION_URL=
 JWT_SECRET=
 JWT_EXPIRY=
