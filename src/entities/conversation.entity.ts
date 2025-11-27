@@ -1,13 +1,41 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { MessageEntity } from './message.entity';
 
 @Entity('conversation')
 export class ConversationEntity {
   @PrimaryGeneratedColumn('uuid')
   conversationId: string;
 
+  @Column({ nullable: true })
+  lastMessage: string;
+
   @Column('jsonb', { nullable: false })
   members: string[];
 
-  @Column('jsonb', { nullable: false })
-  message: Record<string, any>;
+  @Column('jsonb', { default: [], nullable: true })
+  deletedBy: string[];
+
+  @OneToMany(() => MessageEntity, (message) => message.conversation)
+  messages: MessageEntity[];
+
+  @UpdateDateColumn({
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'CURRENT_TIMESTAMP',
+  })
+  updatedAt: Date;
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'timestamptz',
+  })
+  createdAt: Date;
 }

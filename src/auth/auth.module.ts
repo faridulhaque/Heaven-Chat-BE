@@ -7,8 +7,15 @@ import { TLoggers } from 'src/services/enums';
 import { ServiceLevelLogger } from 'src/infrastructure';
 import { JwtService } from '@nestjs/jwt';
 
+import { ConversationEntity } from 'src/entities/conversation.entity';
+import { MessageEntity } from 'src/entities/message.entity';
+import { ChatModule } from 'src/chat/chat.module';
+
 @Module({
-  imports: [TypeOrmModule.forFeature([UserEntity])],
+  imports: [
+    TypeOrmModule.forFeature([UserEntity, ConversationEntity, MessageEntity]),
+    ChatModule,
+  ],
   controllers: [AuthController],
   providers: [
     AuthService,
@@ -17,6 +24,7 @@ import { JwtService } from '@nestjs/jwt';
       provide: TLoggers.auth,
       useValue: new ServiceLevelLogger(TLoggers.auth),
     },
+
     JwtService,
   ],
 })

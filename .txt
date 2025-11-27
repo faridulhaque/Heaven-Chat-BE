@@ -3,9 +3,11 @@
 
 
 
-npm run typeorm:generate-migration --name=email
+npm run typeorm:generate-migration --fm
 npm run typeorm:run-migrations
 
 
 
 
+cloudflared tunnel --url http://localhost:3010
+cloudflared tunnel run dev-tunnel

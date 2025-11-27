@@ -1,4 +1,9 @@
-import { Column, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  PrimaryGeneratedColumn,
+} from 'typeorm';
 
 @Entity('user')
 export class UserEntity {
@@ -8,9 +13,19 @@ export class UserEntity {
   @Column('')
   name: string;
 
-  @Column('')
+  @Column({ unique: true })
   email: string;
 
   @Column('')
   avatar: string;
+
+  @Column('jsonb', { nullable: true })
+  blocked: string[];
+
+  @CreateDateColumn({
+    type: 'timestamp',
+    default: () => 'CURRENT_TIMESTAMP',
+    onUpdate: 'timestamptz',
+  })
+  createdAt: Date;
 }
