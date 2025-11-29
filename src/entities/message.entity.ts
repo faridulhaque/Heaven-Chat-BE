@@ -24,7 +24,9 @@ export class MessageEntity {
   @Column('')
   type: string;
 
-  @ManyToOne(() => ConversationEntity, (c) => c.messages)
+  @ManyToOne(() => ConversationEntity, (c) => c.messages, {
+    onDelete: 'CASCADE',
+  })
   conversation: ConversationEntity;
 
   @CreateDateColumn({
