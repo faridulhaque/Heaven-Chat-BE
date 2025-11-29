@@ -82,7 +82,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     const recipientSocketId = this.userSockets.get(data?.recipientId) as string;
 
     if (!recipientSocketId) return;
-    console.log('recipientsocketid', recipientSocketId);
 
     this.server.to(recipientSocketId).emit('new-chat');
     // this.server.emit('new-chat', 'test');

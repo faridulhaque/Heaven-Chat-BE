@@ -16,7 +16,8 @@ async function bootstrap() {
   });
   app.enableCors({
     // origin: 'http://localhost:4034',
-    origin: '*',
+    origin: 'https://heaven-chat-fe.vercel.app',
+    // origin: '*',
 
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type,Accept,x-api-key,x-client-id,authorization',
