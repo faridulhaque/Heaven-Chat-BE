@@ -26,47 +26,63 @@ export class AuthService {
 
   async registerUser(dto: RegisterDto): Promise<{ token: string }> {
     this.logger.verbose('Started onboarding user');
-    const savedUser = await this.userRepository.save({
-      name: dto.name,
-      avatar: dto.avatar,
-      email: dto.email,
-    });
+    try {
+      const savedUser = await this.userRepository.save({
+        name: dto.name,
+        avatar: dto.avatar,
+        email: dto.email,
+      });
 
-    if (!savedUser)
+      if (!savedUser)
+        throw new HttpException(
+          'Failed to create new user',
+          HttpStatus.NOT_FOUND,
+        );
+      this.logger.log('New user created');
+      this.chatGatewayService.broadcastNewUser({
+        user: savedUser,
+      });
+      const token = this.generateJWT(savedUser.userId);
+      return {
+        token,
+      };
+    } catch (error) {
+      this.logger.error(`Error while registering ${error?.message}`);
       throw new HttpException(
-        'Failed to create new user',
-        HttpStatus.NOT_FOUND,
+        error?.message || 'Failed to register',
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
       );
-    this.logger.log('New user created');
-    this.chatGatewayService.broadcastNewUser({
-      user: savedUser,
-    });
-    const token = this.generateJWT(savedUser.userId);
-    return {
-      token,
-    };
+    }
   }
 
   async loginUser(dto: LoginDto): Promise<{ token: string | null }> {
     this.logger.verbose('Started onboarding user');
 
-    const existingUser = await this.userRepository.findOne({
-      where: { email: dto.email },
-    });
+    try {
+      const existingUser = await this.userRepository.findOne({
+        where: { email: dto.email },
+      });
 
-    if (!existingUser) {
-      this.logger.warn(`User not found for email ${dto.email}`);
-      return { token: null };
+      if (!existingUser) {
+        this.logger.warn(`User not found for email ${dto.email}`);
+        return { token: null };
+      }
+
+      this.chatGatewayService.broadcastNewUser({
+        user: existingUser,
+      });
+
+      this.logger.log(`User authenticated: ${existingUser.userId}`);
+
+      const token = this.generateJWT(existingUser.userId);
+      return { token };
+    } catch (error) {
+      this.logger.error(`Error while logging in ${error?.message}`);
+      throw new HttpException(
+        error?.message || 'Failed to log in',
+        error?.status ?? HttpStatus.INTERNAL_SERVER_ERROR,
+      );
     }
-
-    this.chatGatewayService.broadcastNewUser({
-      user: existingUser,
-    });
-
-    this.logger.log(`User authenticated: ${existingUser.userId}`);
-
-    const token = this.generateJWT(existingUser.userId);
-    return { token };
   }
 
   private generateJWT(id: string): string {
