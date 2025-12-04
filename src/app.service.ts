@@ -20,6 +20,7 @@ export class AppService {
       const user = await this.userRepository.findOne({
         where: { email: 'faridmurshed11@gmail.com' },
       });
+      this.logger.log('user found', user?.userId)
       if (user) return { message: `Hello, ${user?.email}` };
     } catch (error) {
       this.logger.error(error);
