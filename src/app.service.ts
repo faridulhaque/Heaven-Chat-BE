@@ -17,11 +17,11 @@ export class AppService {
   async getHello() {
     try {
       this.logger.verbose('health is called');
-      const user = await this.userRepository.findOne({
-        where: { email: 'faridmurshed11@gmail.com' },
-      });
-      this.logger.log('user found', user?.userId)
-      if (user) return { message: `Hello, ${user?.email}` };
+      // const user = await this.userRepository.findOne({
+      //   where: { email: 'faridmurshed11@gmail.com' },
+      // });
+      // this.logger.log('user found', user?.userId)
+      // if (user) return { message: `Hello, ${user?.email}` };
     } catch (error) {
       this.logger.error(error);
       throw new HttpException(
