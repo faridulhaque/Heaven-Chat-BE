@@ -1,4 +1,10 @@
-import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
+import {
+  HttpException,
+  HttpStatus,
+  Inject,
+  Injectable,
+  Query,
+} from '@nestjs/common';
 import { EnvironmentConfigService, ServiceLevelLogger } from './infrastructure';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -14,13 +20,18 @@ export class AppService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
   ) {}
-  async getHello() {
+  async getHello(@Query('q') q: string) {
     try {
       this.logger.verbose('health is called');
-      const user = await this.userRepository.findOne({
-        where: { email: 'faridmurshed11@gmail.com' },
-      });
-      if (user) return { message: `Hello, ${user?.email}` };
+      if (q && q === 'db') {
+        const user = await this.userRepository.findOne({
+          where: { email: 'faridmurshed11@gmail.com' },
+        });
+        this.logger.log('User fetched');
+        if (user) return { message: `Hello, ${user?.email}` };
+      } else {
+        return { message: 'Hello world!' };
+      }
     } catch (error) {
       this.logger.error(error);
       throw new HttpException(
