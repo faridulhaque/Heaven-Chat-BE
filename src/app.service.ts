@@ -1,10 +1,4 @@
-import {
-  HttpException,
-  HttpStatus,
-  Inject,
-  Injectable,
-  Query,
-} from '@nestjs/common';
+import { HttpException, HttpStatus, Inject, Injectable } from '@nestjs/common';
 import { EnvironmentConfigService, ServiceLevelLogger } from './infrastructure';
 import { InjectRepository } from '@nestjs/typeorm';
 import { UserEntity } from './entities/user.entity';
@@ -20,7 +14,7 @@ export class AppService {
     @InjectRepository(UserEntity)
     private readonly userRepository: Repository<UserEntity>,
   ) {}
-  async getHello(@Query('q') q: string) {
+  async getHello(q: string) {
     try {
       this.logger.verbose('health is called');
       if (q && q === 'db') {
